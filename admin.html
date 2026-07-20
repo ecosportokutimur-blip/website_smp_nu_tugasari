@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — SMP NU Tugasari</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --bg-2: #e9ecef;
+    --card: #ffffff;
+    --card-2: #f8f9fa;
+    --fg: #1a1d21;
+    --fg-2: #4a5057;
+    --muted: #8b929b;
+    --accent: #d4af37;
+    --accent-2: #b8941e;
+    --accent-soft: #e6c869;
+    --nu-green: #006a3e;
+    --nu-green-2: #008a52;
+    --border: #d1d5db;
+    --border-2: #c4c9cf;
+    --danger: #dc2626;
+    --success: #16a34a;
+    --warning: #ea580c;
+    --info: #2563eb;
+  }
+  
+  * { -webkit-font-smoothing: antialiased; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+  }
+  
+  .font-display { font-family: 'Rajdhani', sans-serif; }
+  .font-heading { font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.02em; }
+  
+  /* Sidebar */
+  .sidebar {
+    background: var(--fg);
+    color: #fff;
+    width: 260px;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar { width: 6px; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+  
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 16px; border-radius: 8px;
+    color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 600;
+    transition: all 0.2s; cursor: pointer;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .nav-link:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-link.active { 
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: var(--fg); font-weight: 700;
+  }
+  .nav-link i { width: 18px; text-align: center; font-size: 14px; }
+  .nav-link .badge {
+    margin-left: auto; background: var(--danger); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+  }
+  .nav-link.active .badge { background: var(--fg); color: var(--accent); }
+  
+  .nav-section-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.15em;
+    color: rgba(255,255,255,0.3); text-transform: uppercase;
+    padding: 16px 16px 8px; margin-top: 8px;
+  }
+  
+  /* Main */
+  .main-content {
+    margin-left: 260px;
+    min-height: 100vh;
+    transition: margin 0.3s;
+  }
+  
+  .topbar {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; gap: 16px;
+  }
+  
+  /* Cards */
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.4s;
+  }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.1); }
+  .stat-card:hover::before { transform: scaleX(1); }
+  
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .panel-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card-2);
+  }
+  
+  /* Tables */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table thead th {
+    text-align: left; padding: 12px 16px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+    background: var(--card-2); border-bottom: 1px solid var(--border);
+  }
+  .data-table tbody td {
+    padding: 14px 16px; font-size: 13px; font-weight: 500;
+    border-bottom: 1px solid var(--bg-2);
+  }
+  .data-table tbody tr:hover { background: var(--card-2); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 9px 16px; border-radius: 6px; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;
+    transition: all 0.2s; border: none; font-family: 'Rajdhani', sans-serif;
+  }
+  .btn-primary { background: var(--fg); color: #fff; }
+  .btn-primary:hover { background: var(--accent); color: var(--fg); }
+  .btn-accent { background: var(--accent); color: var(--fg); }
+  .btn-accent:hover { background: var(--accent-2); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border-2); color: var(--fg-2); }
+  .btn-ghost:hover { border-color: var(--fg); color: var(--fg); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #15803d; }
+  .btn-sm { padding: 6px 10px; font-size: 11px; }
+  .btn-icon {
+    width: 32px; height: 32px; padding: 0; border-radius: 6px;
+    background: var(--bg-2); color: var(--fg-2); border: 1px solid var(--border);
+  }
+  .btn-icon:hover { background: var(--accent); color: var(--fg); border-color: var(--accent); }
+  .btn-icon.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  
+  /* Inputs */
+  .input, .select, .textarea {
+    background: var(--card-2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 14px; color: var(--fg); width: 100%; transition: all 0.2s;
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  }
+  .input:focus, .select:focus, .textarea:focus {
+    outline: none; border-color: var(--accent); background: #fff;
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.15);
+  }
+  .label {
+    display: block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--fg-2); margin-bottom: 6px;
+  }
+  
+  /* Badges */
+  .badge-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 12px;
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; font-family: 'Rajdhani', sans-serif;
+  }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-approved { background: #d1fae5; color: #065f46; }
+  .badge-rejected { background: #fee2e2; color: #991b1b; }
+  .badge-verified { background: #dbeafe; color: #1e40af; }
+  
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,29,33,0.6);
+    backdrop-filter: blur(4px); z-index: 100;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; transition: opacity 0.3s;
+  }
+  .modal-overlay.show { display: flex; opacity: 1; }
+  .modal {
+    background: #fff; border-radius: 12px; max-width: 600px; width: 100%;
+    max-height: 90vh; overflow-y: auto; transform: scale(0.95);
+    transition: transform 0.3s;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal-header {
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-body { padding: 24px; }
+  .modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 10px; background: var(--card-2);
+  }
+  
+  /* Login */
+  .login-bg {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(212,175,55,0.15), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 80%, rgba(0,106,62,0.1), transparent 60%),
+      var(--fg);
+  }
+  
+  /* Toast */
+  .toast {
+    position: fixed; top: 24px; right: 24px; z-index: 200;
+    background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--success);
+    padding: 14px 18px; border-radius: 8px; max-width: 360px;
+    transform: translateX(120%); transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
+  }
+  .toast.show { transform: translateX(0); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.warning { border-left-color: var(--warning); }
+  
+  /* View transitions */
+  .view { display: none; animation: fadeIn 0.4s; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  
+  /* Toggle */
+  .toggle { position: relative; width: 42px; height: 22px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: var(--border-2); border-radius: 22px; transition: 0.3s;
+  }
+  .toggle-slider::before {
+    content:''; position: absolute; height: 16px; width: 16px;
+    left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+  
+  /* Profile dropdown */
+  .dropdown { position: relative; }
+  .dropdown-menu {
+    position: absolute; top: calc(100% + 8px); right: 0; min-width: 220px;
+    background: #fff; border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+    opacity: 0; visibility: hidden; transform: translateY(-8px);
+    transition: all 0.25s; z-index: 60; padding: 8px;
+  }
+  .dropdown.open .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+  .dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    color: var(--fg-2); cursor: pointer; transition: all 0.15s;
+  }
+  .dropdown-item:hover { background: var(--bg-2); color: var(--fg); }
+  .dropdown-item.danger:hover { background: #fee2e2; color: var(--danger); }
+  
+  /* Avatar */
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: var(--fg); display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; font-family: 'Rajdhani', sans-serif;
+  }
+  .avatar-lg { width: 80px; height: 80px; font-size: 28px; }
+  .avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+  
+  /* Mobile menu toggle */
+  #sidebarToggle { display: none; }
+  @media (max-width: 1024px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    #sidebarToggle { display: flex; }
+  }
+  
+  /* Search */
+  .search-box {
+    position: relative; flex: 1; max-width: 400px;
+  }
+  .search-box input { padding-left: 38px; }
+  .search-box i {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 13px;
+  }
+  
+  /* Charts */
+  .chart-container { position: relative; height: 280px; }
+  
+  /* Activity feed */
+  .activity-item {
+    display: flex; gap: 12px; padding: 12px 0;
+    border-bottom: 1px solid var(--bg-2);
+  }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-dot {
+    width: 8px; height: 8px; border-radius: 50%; margin-top: 6px;
+    background: var(--accent); flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.2);
+  }
+  
+  /* Progress bar */
+  .progress {
+    height: 6px; background: var(--bg-2); border-radius: 3px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    border-radius: 3px; transition: width 0.6s;
+  }
+  
+  /* Gallery grid */
+  .gallery-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; transition: all 0.3s;
+  }
+  .gallery-card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px -10px rgba(0,0,0,0.15); }
+  .gallery-card img { width: 100%; height: 160px; object-fit: cover; }
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN SCREEN ============== -->
+<div id="loginScreen" class="login-bg min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <img src="https://z-cdn-media.chatglm.cn/files/dd240060-6936-4c05-9ad3-2b14cff1995e.png?auth_key=1884567944-3e51c961820f4ac7b3e8694628b084f7-0-816e4a82c56215ce545839e6d415c56b" alt="Logo" class="w-20 h-20 object-contain mx-auto mb-4">
+      <h1 class="font-heading text-2xl font-bold text-white tracking-wider">SMP NU TUGASARI</h1>
+      <p class="text-xs tracking-[0.2em] text-[var(--accent)] uppercase mt-1 font-bold">Admin Control Panel</p>
+    </div>
+    
+    <div class="bg-white rounded-2xl p-8 shadow-2xl">
+      <h2 class="font-display text-2xl font-bold uppercase mb-1">Masuk ke Dashboard</h2>
+      <p class="text-sm text-[var(--muted)] mb-6 font-medium">Silakan masuk dengan akun administrator Anda.</p>
+      
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="label">Username</label>
+          <div class="relative">
+            <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] text-sm"></i>
+            <input type="text" id="loginUser" class="input" style="padding-left: 42px;" placeholder="admin" value="admin" required>
+          </div>
+        </div>
+        <div>
+          <label class="label">Password</label>
+          <div class="relative">
+            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] text-sm"></i>
+            <input type="password" id="loginPass" class="input" style="padding-left: 42px; padding-right: 42px;" placeholder="••••••••" value="admin123" required>
+            <button type="button" id="togglePass" class="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--fg)]">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center gap-2 cursor-pointer font-medium text-[var(--fg-2)]">
+            <input type="checkbox" class="accent-[var(--accent)]"> Ingat saya
+          </label>
+          <a href="#" class="text-[var(--accent-2)] font-bold hover:underline">Lupa password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="padding: 13px;">
+          <i class="fa-solid fa-right-to-bracket"></i> Masuk
+        </button>
+      </form>
+      
+      <div class="mt-6 p-3 bg-[var(--bg-2)] rounded-lg text-xs text-[var(--muted)] font-medium">
+        <i class="fa-solid fa-circle-info text-[var(--accent-2)] mr-1"></i>
+        Demo: <strong>admin</strong> / <strong>admin123</strong>
+      </div>
+    </div>
+    
+    <p class="text-center text-xs text-white/50 mt-6 font-medium">© 2024 SMP NU Tugasari. Sistem Admin.</p>
+  </div>
+</div>
+
+<!-- ============== ADMIN LAYOUT ============== -->
+<div id="adminLayout" class="hidden">
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="p-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <img src="https://z-cdn-media.chatglm.cn/files/dd240060-6936-4c05-9ad3-2b14cff1995e.png?auth_key=1884567944-3e51c961820f4ac7b3e8694628b084f7-0-816e4a82c56215ce545839e6d415c56b" alt="Logo" class="w-10 h-10 object-contain">
+        <div>
+          <div class="font-heading text-sm font-bold tracking-wider">SMP NU TUGASARI</div>
+          <div class="text-[9px] tracking-[0.15em] text-[var(--accent)] uppercase font-bold">Admin Panel</div>
+        </div>
+      </div>
+    </div>
+    
+    <nav class="flex-1 p-3 overflow-y-auto">
+      <div class="nav-section-title">Utama</div>
+      <div class="nav-link active" data-view="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      <div class="nav-link" data-view="ppdb"><i class="fa-solid fa-user-plus"></i> PPDB <span class="badge" id="ppdbBadge">12</span></div>
+      <div class="nav-link" data-view="siswa"><i class="fa-solid fa-users"></i> Siswa</div>
+      <div class="nav-link" data-view="guru"><i class="fa-solid fa-chalkboard-user"></i> Guru & Staf</div>
+      
+      <div class="nav-section-title">Konten</div>
+      <div class="nav-link" data-view="program"><i class="fa-solid fa-book-open"></i> Program</div>
+      <div class="nav-link" data-view="galeri"><i class="fa-solid fa-images"></i> Galeri</div>
+      <div class="nav-link" data-view="pesan"><i class="fa-solid fa-envelope"></i> Pesan <span class="badge" id="pesanBadge">5</span></div>
+      
+      <div class="nav-section-title">Sistem</div>
+      <div class="nav-link" data-view="pengaturan"><i class="fa-solid fa-gear"></i> Pengaturan</div>
+      <div class="nav-link" data-view="laporan"><i class="fa-solid fa-chart-pie"></i> Laporan</div>
+    </nav>
+    
+    <div class="p-3 border-t border-white/10">
+      <a href="index.html" class="nav-link"><i class="fa-solid fa-globe"></i> Lihat Situs</a>
+      <div class="nav-link" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</div>
+    </div>
+  </aside>
+  
+  <!-- MAIN -->
+  <div class="main-content">
+    
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button id="sidebarToggle" class="btn-icon"><i class="fa-solid fa-bars"></i></button>
+      <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" class="input" placeholder="Cari siswa, guru, pesan...">
+      </div>
+      <div class="flex-1"></div>
+      <button class="btn-icon relative" title="Notifikasi">
+        <i class="fa-solid fa-bell"></i>
+        <span class="absolute -top-1 -right-1 w-4 h-4 bg-[var(--danger)] text-white text-[9px] font-bold rounded-full flex items-center justify-center">3</span>
+      </button>
+      <button class="btn-icon" title="Bantuan"><i class="fa-solid fa-circle-question"></i></button>
+      
+      <div class="dropdown" id="profileDropdown">
+        <button class="flex items-center gap-3 p-1 pr-3 rounded-lg hover:bg-[var(--bg-2)] transition" onclick="document.getElementById('profileDropdown').classList.toggle('open')">
+          <div class="avatar">AD</div>
+          <div class="text-left hidden md:block">
+            <div class="text-xs font-bold font-display uppercase leading-tight">Admin</div>
+            <div class="text-[10px] text-[var(--muted)] font-medium">Super Admin</div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-[var(--muted)]"></i>
+        </button>
+        <div class="dropdown-menu">
+          <div class="px-3 py-2 mb-1 border-b border-[var(--border)]">
+            <div class="text-sm font-bold font-display uppercase">Administrator</div>
+            <div class="text-xs text-[var(--muted)]">admin@smpnutugasari.sch.id</div>
+          </div>
+          <div class="dropdown-item"><i class="fa-solid fa-user w-4"></i> Profil Saya</div>
+          <div class="dropdown-item"><i class="fa-solid fa-gear w-4"></i> Pengaturan Akun</div>
+          <div class="dropdown-item"><i class="fa-solid fa-shield-halved w-4"></i> Keamanan</div>
+          <div class="border-t border-[var(--border)] my-1"></div>
+          <div class="dropdown-item danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket w-4"></i> Keluar</div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- CONTENT -->
+    <main class="p-6 lg:p-8">
+      
+      <!-- ====== DASHBOARD VIEW ====== -->
+      <section class="view active" id="view-dashboard">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Selamat Datang Kembali</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Dashboard Overview</h1>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost"><i class="fa-solid fa-calendar"></i> Tahun Ajaran 2024/2025</button>
+            <button class="btn btn-accent" onclick="openModal('modalAddProgram')"><i class="fa-solid fa-download"></i> Export Data</button>
+          </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-lg bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent-2)] text-lg">
+                <i class="fa-solid fa-users"></i>
+              </div>
+              <span class="text-[10px] font-bold text-[var(--success)] uppercase"><i class="fa-solid fa-arrow-up"></i> 12%</span>
+            </div>
+            <div class="font-display text-3xl font-bold" id="statSiswa">450</div>
+            <div class="text-xs text-[var(--muted)] uppercase font-bold tracking-wider mt-1">Total Siswa Aktif</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-lg bg-[var(--nu-green)]/15 flex items-center justify-center text-[var(--nu-green)] text-lg">
+                <i class="fa-solid fa-user-plus"></i>
+              </div>
+              <span class="text-[10px] font-bold text-[var(--warning)] uppercase"><i class="fa-solid fa-clock"></i> Pending</span>
+            </div>
+            <div class="font-display text-3xl font-bold" id="statPPDB">12</div>
+            <div class="text-xs text-[var(--muted)] uppercase font-bold tracking-wider mt-1">Pendaftar PPDB Baru</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 text-lg">
+                <i class="fa-solid fa-chalkboard-user"></i>
+              </div>
+              <span class="text-[10px] font-bold text-[var(--muted)] uppercase">Tetap</span>
+            </div>
+            <div class="font-display text-3xl font-bold">35</div>
+            <div class="text-xs text-[var(--muted)] uppercase font-bold tracking-wider mt-1">Guru & Staf</div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-11 h-11 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 text-lg">
+                <i class="fa-solid fa-envelope"></i>
+              </div>
+              <span class="text-[10px] font-bold text-[var(--danger)] uppercase">Baru</span>
+            </div>
+            <div class="font-display text-3xl font-bold" id="statPesan">5</div>
+            <div class="text-xs text-[var(--muted)] uppercase font-bold tracking-wider mt-1">Pesan Belum Dibaca</div>
+          </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div class="panel lg:col-span-2">
+            <div class="panel-header">
+              <div>
+                <h3 class="font-display text-lg font-bold uppercase">Tren Pendaftaran PPDB</h3>
+                <p class="text-xs text-[var(--muted)] font-medium">6 bulan terakhir</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="btn btn-ghost btn-sm">Bulanan</button>
+                <button class="btn btn-ghost btn-sm">Tahunan</button>
+              </div>
+            </div>
+            <div class="p-5">
+              <div class="chart-container">
+                <canvas id="chartPPDB"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3 class="font-display text-lg font-bold uppercase">Distribusi Siswa</h3>
+                <p class="text-xs text-[var(--muted)] font-medium">Per kelas</p>
+              </div>
+            </div>
+            <div class="p-5">
+              <div class="chart-container">
+                <canvas id="chartKelas"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Bottom Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="panel lg:col-span-2">
+            <div class="panel-header">
+              <h3 class="font-display text-lg font-bold uppercase">Pendaftar PPDB Terbaru</h3>
+              <button class="btn btn-ghost btn-sm" onclick="switchView('ppdb')">Lihat Semua <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nama</th>
+                    <th>Asal Sekolah</th>
+                    <th>Tanggal</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recentPPDB"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="font-display text-lg font-bold uppercase">Aktivitas Terbaru</h3>
+            </div>
+            <div class="p-5">
+              <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                  <div class="text-xs font-semibold">Pendaftar baru: <span class="text-[var(--accent-2)]">Ahmad Zaki</span></div>
+                  <div class="text-[10px] text-[var(--muted)] mt-0.5">2 menit yang lalu</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--nu-green);box-shadow:0 0 0 3px rgba(0,106,62,0.2);"></div>
+                <div>
+                  <div class="text-xs font-semibold">Pesan baru dari <span class="text-[var(--accent-2)]">Budi Santoso</span></div>
+                  <div class="text-[10px] text-[var(--muted)] mt-0.5">25 menit yang lalu</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--info);box-shadow:0 0 0 3px rgba(37,99,235,0.2);"></div>
+                <div>
+                  <div class="text-xs font-semibold">Guru baru ditambahkan: <span class="text-[var(--accent-2)]">Siti Khodijah</span></div>
+                  <div class="text-[10px] text-[var(--muted)] mt-0.5">1 jam yang lalu</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,0.2);"></div>
+                <div>
+                  <div class="text-xs font-semibold">PPDB disetujui: <span class="text-[var(--accent-2)]">5 siswa</span></div>
+                  <div class="text-[10px] text-[var(--muted)] mt-0.5">3 jam yang lalu</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-dot" style="background:var(--warning);box-shadow:0 0 0 3px rgba(234,88,12,0.2);"></div>
+                <div>
+                  <div class="text-xs font-semibold">Galeri diperbarui: <span class="text-[var(--accent-2)]">3 foto baru</span></div>
+                  <div class="text-[10px] text-[var(--muted)] mt-0.5">5 jam yang lalu</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ====== PPDB VIEW ====== -->
+      <section class="view" id="view-ppdb">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Manajemen PPDB</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Penerimaan Peserta Didik Baru</h1>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost" onclick="exportCSV('ppdb')"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+            <button class="btn btn-accent" onclick="openModal('modalAddPPDB')"><i class="fa-solid fa-plus"></i> Tambah Pendaftar</button>
+          </div>
+        </div>
+        
+        <!-- Filter tabs -->
+        <div class="flex gap-2 mb-6 flex-wrap">
+          <button class="btn btn-primary btn-sm filter-ppdb active" data-status="all">Semua (<span id="cntAll">0</span>)</button>
+          <button class="btn btn-ghost btn-sm filter-ppdb" data-status="pending">Pending (<span id="cntPending">0</span>)</button>
+          <button class="btn btn-ghost btn-sm filter-ppdb" data-status="approved">Disetujui (<span id="cntApproved">0</span>)</button>
+          <button class="btn btn-ghost btn-sm filter-ppdb" data-status="rejected">Ditolak (<span id="cntRejected">0</span>)</button>
+        </div>
+        
+        <div class="panel">
+          <div class="panel-header">
+            <div class="search-box" style="max-width:300px;">
+              <i class="fa-solid fa-search"></i>
+              <input type="text" id="searchPPDB" class="input" placeholder="Cari nama pendaftar...">
+            </div>
+            <div class="flex gap-2">
+              <select class="select" style="width:auto;" id="sortPPDB">
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="name">Nama A-Z</option>
+              </select>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" class="accent-[var(--accent)]"></th>
+                  <th>Nama Lengkap</th>
+                  <th>Asal Sekolah</th>
+                  <th>Orang Tua</th>
+                  <th>Tgl Daftar</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="ppdbTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ====== SISWA VIEW ====== -->
+      <section class="view" id="view-siswa">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Manajemen Siswa</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Database Siswa Aktif</h1>
+          </div>
+          <button class="btn btn-accent" onclick="openModal('modalAddSiswa')"><i class="fa-solid fa-plus"></i> Tambah Siswa</button>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="stat-card">
+            <div class="text-xs text-[var(--muted)] uppercase font-bold mb-1">Kelas VII</div>
+            <div class="font-display text-2xl font-bold">152</div>
+            <div class="progress mt-2"><div class="progress-bar" style="width:34%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="text-xs text-[var(--muted)] uppercase font-bold mb-1">Kelas VIII</div>
+            <div class="font-display text-2xl font-bold">148</div>
+            <div class="progress mt-2"><div class="progress-bar" style="width:33%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="text-xs text-[var(--muted)] uppercase font-bold mb-1">Kelas IX</div>
+            <div class="font-display text-2xl font-bold">150</div>
+            <div class="progress mt-2"><div class="progress-bar" style="width:33%"></div></div>
+          </div>
+          <div class="stat-card">
+            <div class="text-xs text-[var(--muted)] uppercase font-bold mb-1">L : P</div>
+            <div class="font-display text-2xl font-bold">230 : 220</div>
+            <div class="text-[10px] text-[var(--muted)] mt-2">Rasio seimbang</div>
+          </div>
+        </div>
+        
+        <div class="panel">
+          <div class="panel-header">
+            <div class="search-box" style="max-width:300px;">
+              <i class="fa-solid fa-search"></i>
+              <input type="text" id="searchSiswa" class="input" placeholder="Cari nama atau NIS...">
+            </div>
+            <select class="select" style="width:auto;" id="filterKelasSiswa">
+              <option value="all">Semua Kelas</option>
+              <option value="VII">Kelas VII</option>
+              <option value="VIII">Kelas VIII</option>
+              <option value="IX">Kelas IX</option>
+            </select>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>NIS</th>
+                  <th>Nama Siswa</th>
+                  <th>Kelas</th>
+                  <th>Jenis Kelamin</th>
+                  <th>Wali</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="siswaTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ====== GURU VIEW ====== -->
+      <section class="view" id="view-guru">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Manajemen Pendidik</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Guru & Staf Sekolah</h1>
+          </div>
+          <button class="btn btn-accent" onclick="openModal('modalAddGuru')"><i class="fa-solid fa-plus"></i> Tambah Guru</button>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="guruGrid"></div>
+      </section>
+      
+      <!-- ====== PROGRAM VIEW ====== -->
+      <section class="view" id="view-program">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Manajemen Konten</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Program Unggulan</h1>
+          </div>
+          <button class="btn btn-accent" onclick="openModal('modalAddProgram')"><i class="fa-solid fa-plus"></i> Tambah Program</button>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="programGrid"></div>
+      </section>
+      
+      <!-- ====== GALERI VIEW ====== -->
+      <section class="view" id="view-galeri">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Manajemen Konten</div>
+            <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Galeri Kegiatan</h1>
+          </div>
+          <button class="btn btn-accent" onclick="openModal('modalAddGaleri')"><i class="fa-solid fa-plus"></i> Upload Foto</button>
+        </div>
+        
+        <div class="flex gap-2 mb-6 flex-wrap">
+          <button class="btn btn-primary btn-sm filter-gallery active" data-cat="all">Semua</button>
+          <button class="btn btn-ghost btn-sm filter-gallery" data-cat="akademik">Akademik</button>
+          <button class="btn btn-ghost btn-sm filter-gallery" data-cat="religi">Keagamaan</button>
+          <button class="btn btn-ghost btn-sm filter-gallery" data-cat="ekskul">Ekstrakurikuler</button>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="galeriGrid"></div>
+      </section>
+      
+      <!-- ====== PESAN VIEW ====== -->
+      <section class="view" id="view-pesan">
+        <div class="mb-8">
+          <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Kotak Masuk</div>
+          <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Pesan & Kontak</h1>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Inbox list -->
+          <div class="panel lg:col-span-1">
+            <div class="panel-header">
+              <h3 class="font-display text-lg font-bold uppercase">Inbox</h3>
+              <span class="badge-status badge-pending" id="unreadCount">5 baru</span>
+            </div>
+            <div id="pesanList" style="max-height: 600px; overflow-y: auto;"></div>
+          </div>
+          
+          <!-- Message detail -->
+          <div class="panel lg:col-span-2">
+            <div class="panel-header">
+              <div class="flex items-center gap-3">
+                <div class="avatar" id="pesanAvatar">?</div>
+                <div>
+                  <div class="font-display font-bold uppercase text-sm" id="pesanSender">Pilih Pesan</div>
+                  <div class="text-xs text-[var(--muted)]" id="pesanEmail">—</div>
+                </div>
+              </div>
+              <div class="flex gap-1">
+                <button class="btn-icon" title="Tandai dibaca"><i class="fa-solid fa-envelope-open"></i></button>
+                <button class="btn-icon" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="p-6" id="pesanDetail">
+              <div class="text-center py-16 text-[var(--muted)]">
+                <i class="fa-solid fa-envelope-open text-5xl mb-4 opacity-30"></i>
+                <p class="font-medium">Pilih pesan dari daftar untuk membaca</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ====== PENGATURAN VIEW ====== -->
+      <section class="view" id="view-pengaturan">
+        <div class="mb-8">
+          <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Konfigurasi Sistem</div>
+          <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Pengaturan Sekolah</h1>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 space-y-6">
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="font-display text-lg font-bold uppercase">Profil Sekolah</h3>
+              </div>
+              <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="label">Nama Sekolah</label>
+                  <input type="text" class="input" value="SMP NU Tugasari">
+                </div>
+                <div>
+                  <label class="label">NPSN</label>
+                  <input type="text" class="input" value="20365478">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="label">Alamat</label>
+                  <input type="text" class="input" value="Jl. Raya Tugasari No. 01, Tugasari">
+                </div>
+                <div>
+                  <label class="label">Telepon</label>
+                  <input type="text" class="input" value="(0281) 123456">
+                </div>
+                <div>
+                  <label class="label">Email</label>
+                  <input type="email" class="input" value="info@smpnutugasari.sch.id">
+                </div>
+                <div>
+                  <label class="label">Tahun Berdiri</label>
+                  <input type="text" class="input" value="1998">
+                </div>
+                <div>
+                  <label class="label">Akreditasi</label>
+                  <select class="select">
+                    <option>A</option>
+                    <option>B</option>
+                    <option>C</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="font-display text-lg font-bold uppercase">Pengaturan PPDB</h3>
+              </div>
+              <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="label">Tahun Ajaran</label>
+                  <input type="text" class="input" value="2025/2026">
+                </div>
+                <div>
+                  <label class="label">Kuota Siswa</label>
+                  <input type="number" class="input" value="160">
+                </div>
+                <div>
+                  <label class="label">Buka Pendaftaran</label>
+                  <input type="date" class="input" value="2025-01-15">
+                </div>
+                <div>
+                  <label class="label">Tutup Pendaftaran</label>
+                  <input type="date" class="input" value="2025-06-30">
+                </div>
+                <div class="md:col-span-2 flex items-center justify-between p-4 bg-[var(--bg-2)] rounded-lg">
+                  <div>
+                    <div class="font-bold text-sm">Status PPDB</div>
+                    <div class="text-xs text-[var(--muted)]">Buka/tutup pendaftaran online</div>
+                  </div>
+                  <label class="toggle">
+                    <input type="checkbox" checked>
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-6">
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="font-display text-lg font-bold uppercase">Media Sosial</h3>
+              </div>
+              <div class="p-6 space-y-4">
+                <div>
+                  <label class="label"><i class="fa-brands fa-instagram mr-1"></i> Instagram</label>
+                  <input type="text" class="input" value="@smpnutugasari">
+                </div>
+                <div>
+                  <label class="label"><i class="fa-brands fa-youtube mr-1"></i> YouTube</label>
+                  <input type="text" class="input" value="SMP NU Tugasari Official">
+                </div>
+                <div>
+                  <label class="label"><i class="fa-brands fa-facebook mr-1"></i> Facebook</label>
+                  <input type="text" class="input" value="SMP NU Tugasari">
+                </div>
+                <div>
+                  <label class="label"><i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp</label>
+                  <input type="text" class="input" value="0812-3456-7890">
+                </div>
+              </div>
+            </div>
+            
+            <div class="panel">
+              <div class="panel-header">
+                <h3 class="font-display text-lg font-bold uppercase">Keamanan</h3>
+              </div>
+              <div class="p-6 space-y-3">
+                <button class="btn btn-ghost w-full justify-start"><i class="fa-solid fa-key"></i> Ubah Password</button>
+                <button class="btn btn-ghost w-full justify-start"><i class="fa-solid fa-shield-halved"></i> Two-Factor Auth</button>
+                <button class="btn btn-ghost w-full justify-start"><i class="fa-solid fa-history"></i> Log Aktivitas</button>
+              </div>
+            </div>
+            
+            <button class="btn btn-accent w-full" style="padding: 14px;" onclick="showToast('Pengaturan berhasil disimpan.', 'success')">
+              <i class="fa-solid fa-save"></i> Simpan Perubahan
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ====== LAPORAN VIEW ====== -->
+      <section class="view" id="view-laporan">
+        <div class="mb-8">
+          <div class="text-xs text-[var(--accent-2)] font-bold tracking-wider uppercase mb-1">— Analisis Data</div>
+          <h1 class="font-display text-3xl lg:text-4xl font-bold uppercase">Laporan & Statistik</h1>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="font-display text-lg font-bold uppercase">Program Populer</h3>
+            </div>
+            <div class="p-5">
+              <div class="chart-container"><canvas id="chartProgram"></canvas></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h3 class="font-display text-lg font-bold uppercase">Tren Kehadiran</h3>
+            </div>
+            <div class="p-5">
+              <div class="chart-container"><canvas id="chartHadir"></canvas></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="panel">
+          <div class="panel-header">
+            <h3 class="font-display text-lg font-bold uppercase">Ringkasan Akademik per Kelas</h3>
+            <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-download"></i> Download PDF</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kelas</th>
+                  <th>Jumlah Siswa</th>
+                  <th>Rata-rata Nilai</th>
+                  <th>Kehadiran</th>
+                  <th>Prestasi</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>VII A</strong></td>
+                  <td>32</td>
+                  <td>85.4</td>
+                  <td>96%</td>
+                  <td>5</td>
+                  <td><span class="badge-status badge-approved">Excellent</span></td>
+                </tr>
+                <tr>
+                  <td><strong>VII B</strong></td>
+                  <td>30</td>
+                  <td>83.2</td>
+                  <td>94%</td>
+                  <td>3</td>
+                  <td><span class="badge-status badge-approved">Good</span></td>
+                </tr>
+                <tr>
+                  <td><strong>VIII A</strong></td>
+                  <td>31</td>
+                  <td>87.1</td>
+                  <td>97%</td>
+                  <td>8</td>
+                  <td><span class="badge-status badge-approved">Excellent</span></td>
+                </tr>
+                <tr>
+                  <td><strong>VIII B</strong></td>
+                  <td>29</td>
+                  <td>81.5</td>
+                  <td>92%</td>
+                  <td>2</td>
+                  <td><span class="badge-status badge-verified">Fair</span></td>
+                </tr>
+                <tr>
+                  <td><strong>IX A</strong></td>
+                  <td>30</td>
+                  <td>88.9</td>
+                  <td>98%</td>
+                  <td>12</td>
+                  <td><span class="badge-status badge-approved">Excellent</span></td>
+                </tr>
+                <tr>
+                  <td><strong>IX B</strong></td>
+                  <td>31</td>
+                  <td>86.3</td>
+                  <td>95%</td>
+                  <td>7</td>
+                  <td><span class="badge-status badge-approved">Good</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+</div>
+
+<!-- ============== MODALS ============== -->
+
+<!-- Modal Add PPDB -->
+<div class="modal-overlay" id="modalAddPPDB">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="font-display text-xl font-bold uppercase">Tambah Pendaftar PPDB</h3>
+      <button class="btn-icon" onclick="closeModal('modalAddPPDB')"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="label">Nama Lengkap</label><input type="text" class="input" id="newPPDBName" placeholder="Nama calon siswa"></div>
+        <div><label class="label">Asal Sekolah</label><input type="text" class="input" id="newPPDBSchool" placeholder="SD Asal"></div>
+        <div><label class="label">Nama Orang Tua</label><input type="text" class="input" id="newPPDBParent" placeholder="Nama wali"></div>
+        <div><label class="label">No. Telepon</label><input type="text" class="input" id="newPPDBPhone" placeholder="08xx"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAddPPDB')">Batal</button>
+      <button class="btn btn-primary" onclick="addPPDB()"><i class="fa-solid fa-save"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Siswa -->
+<div class="modal-overlay" id="modalAddSiswa">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="font-display text-xl font-bold uppercase">Tambah Siswa Baru</h3>
+      <button class="btn-icon" onclick="closeModal('modalAddSiswa')"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="label">NIS</label><input type="text" class="input" placeholder="2024001"></div>
+        <div><label class="label">Nama Lengkap</label><input type="text" class="input" placeholder="Nama siswa"></div>
+        <div><label class="label">Kelas</label><select class="select"><option>VII A</option><option>VII B</option><option>VIII A</option><option>VIII B</option><option>IX A</option><option>IX B</option></select></div>
+        <div><label class="label">Jenis Kelamin</label><select class="select"><option>Laki-laki</option><option>Perempuan</option></select></div>
+        <div><label class="label">Nama Wali</label><input type="text" class="input" placeholder="Nama orang tua"></div>
+        <div><label class="label">No. Telepon Wali</label><input type="text" class="input" placeholder="08xx"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAddSiswa')">Batal</button>
+      <button class="btn btn-primary" onclick="closeModal('modalAddSiswa'); showToast('Siswa baru berhasil ditambahkan.', 'success')"><i class="fa-solid fa-save"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Guru -->
+<div class="modal-overlay" id="modalAddGuru">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="font-display text-xl font-bold uppercase">Tambah Guru / Staf</h3>
+      <button class="btn-icon" onclick="closeModal('modalAddGuru')"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><label class="label">Nama Lengkap</label><input type="text" class="input" placeholder="Dr. ..."></div>
+        <div><label class="label">NIP</label><input type="text" class="input" placeholder="12345678"></div>
+        <div><label class="label">Jabatan</label><input type="text" class="input" placeholder="Guru Matematika"></div>
+        <div><label class="label">Mata Pelajaran</label><input type="text" class="input" placeholder="Matematika"></div>
+        <div><label class="label">Pendidikan Terakhir</label><select class="select"><option>S1</option><option>S2</option><option>S3</option></select></div>
+        <div><label class="label">Status</label><select class="select"><option>PNS</option><option>PPPK</option><option>Honorer</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAddGuru')">Batal</button>
+      <button class="btn btn-primary" onclick="closeModal('modalAddGuru'); showToast('Guru baru berhasil ditambahkan.', 'success')"><i class="fa-solid fa-save"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Program -->
+<div class="modal-overlay" id="modalAddProgram">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="font-display text-xl font-bold uppercase">Tambah Program</h3>
+      <button class="btn-icon" onclick="closeModal('modalAddProgram')"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div><label class="label">Nama Program</label><input type="text" class="input" placeholder="Contoh: Tahfidz Al-Qur'an"></div>
+        <div><label class="label">Deskripsi Singkat</label><textarea class="textarea" rows="3" placeholder="Deskripsi program..."></textarea></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="label">Ikon (FontAwesome)</label><input type="text" class="input" value="fa-quran" placeholder="fa-quran"></div>
+          <div><label class="label">Warna</label><select class="select"><option>Emas</option><option>Hijau NU</option></select></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAddProgram')">Batal</button>
+      <button class="btn btn-primary" onclick="closeModal('modalAddProgram'); showToast('Program baru berhasil ditambahkan.', 'success')"><i class="fa-solid fa-save"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Galeri -->
+<div class="modal-overlay" id="modalAddGaleri">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="font-display text-xl font-bold uppercase">Upload Foto Galeri</h3>
+      <button class="btn-icon" onclick="closeModal('modalAddGaleri')"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="space-y-4">
+        <div>
+          <label class="label">URL Gambar</label>
+          <input type="text" class="input" placeholder="https://..." id="newGaleriImg">
+        </div>
+        <div>
+          <label class="label">Judul Foto</label>
+          <input type="text" class="input" placeholder="Contoh: Kegiatan Pesantren Ramadhan" id="newGaleriTitle">
+        </div>
+        <div>
+          <label class="label">Kategori</label>
+          <select class="select" id="newGaleriCat">
+            <option value="akademik">Akademik</option>
+            <option value="religi">Keagamaan</option>
+            <option value="ekskul">Ekstrakurikuler</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">Deskripsi</label>
+          <textarea class="textarea" rows="2" placeholder="Deskripsi singkat..." id="newGaleriDesc"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modalAddGaleri')">Batal</button>
+      <button class="btn btn-primary" onclick="addGaleri()"><i class="fa-solid fa-upload"></i> Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== TOAST ============== -->
+<div id="toast" class="toast">
+  <div class="flex items-start gap-3">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-[var(--success)] text-lg mt-0.5"></i>
+    <div>
+      <div id="toastTitle" class="font-bold font-display uppercase text-sm mb-1">Berhasil</div>
+      <div id="toastMsg" class="text-xs text-[var(--muted)] font-medium">Aksi berhasil dilakukan.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============== DATA (Mock + localStorage) ============== */
+const DB = {
+  ppdb: [
+    {id:1, name:'Ahmad Zaki Mubarok', school:'SDN Tugasari 01', parent:'Budi Mubarok', phone:'0812-1111-2222', date:'2025-01-15', status:'pending'},
+    {id:2, name:'Siti Khadijah Nur', school:'MI Ma'arif Tugasari', parent:'H. Nur Hidayat', phone:'0813-2222-3333', date:'2025-01-15', status:'pending'},
+    {id:3, name:'Muhammad Faiz Rizqi', school:'SDN 02 Kec. Tugasari', parent:'Rizqi Abdullah', phone:'0857-3333-4444', date:'2025-01-14', status:'approved'},
+    {id:4, name:'Aisyah Putri Salsabila', school:'SDIT Al-Furqan', parent:'Putri Mahfudz', phone:'0812-5555-6666', date:'2025-01-14', status:'approved'},
+    {id:5, name:'Abdul Rahman Hakim', school:'SDN Tugasari 03', parent:'Hakim Yusuf', phone:'0858-7777-8888', date:'2025-01-13', status:'pending'},
+    {id:6, name:'Nadia Zahra Aulia', school:'MI Al-Hikmah', parent:'Aulia Rahman', phone:'0813-9999-0000', date:'2025-01-13', status:'rejected'},
+    {id:7, name:'Umar Faruq Andika', school:'SDN 01 Tugasari', parent:'Andika Pratama', phone:'0821-1234-5678', date:'2025-01-12', status:'approved'},
+    {id:8, name:'Khansa Bilqis', school:'SD Muhammadiyah', parent:'Bilqis Family', phone:'0822-8765-4321', date:'2025-01-12', status:'pending'},
+    {id:9, name:'Yusuf Hamzah', school:'SDN 02 Tugasari', parent:'Hamzah Ali', phone:'0851-1122-3344', date:'2025-01-11', status:'approved'},
+    {id:10, name:'Zahra Aminah', school:'MI Ma'arif 02', parent:'Aminah Wati', phone:'0852-5566-7788', date:'2025-01-11', status:'pending'},
+    {id:11, name:'Ridhoullah Akbar', school:'SDIT Lukmanul Hakim', parent:'Akbar Surya', phone:'0853-9900-1122', date:'2025-01-10', status:'approved'},
+    {id:12, name:'Maryam Salma', school:'SDN 03 Tugasari', parent:'Salma Dewi', phone:'0856-3344-5566', date:'2025-01-10', status:'pending'},
+  ],
+  siswa: [
+    {nis:'2024001', name:'Ahmad Zaki Mubarok', kelas:'VII A', jk:'L', wali:'Budi Mubarok', status:'Aktif'},
+    {nis:'2024002', name:'Siti Khadijah Nur', kelas:'VII A', jk:'P', wali:'Nur Hidayat', status:'Aktif'},
+    {nis:'2024003', name:'Muhammad Faiz', kelas:'VII B', jk:'L', wali:'Rizqi Abdullah', status:'Aktif'},
+    {nis:'2023015', name:'Aisyah Putri', kelas:'VIII A', jk:'P', wali:'Mahfudz', status:'Aktif'},
+    {nis:'2023016', name:'Abdul Rahman', kelas:'VIII A', jk:'L', wali:'Hakim Yusuf', status:'Aktif'},
+    {nis:'2023017', name:'Nadia Zahra', kelas:'VIII B', jk:'P', wali:'Aulia Rahman', status:'Aktif'},
+    {nis:'2022030', name:'Umar Faruq', kelas:'IX A', jk:'L', wali:'Andika Pratama', status:'Aktif'},
+    {nis:'2022031', name:'Khansa Bilqis', kelas:'IX A', jk:'P', wali:'Bilqis Family', status:'Aktif'},
+    {nis:'2022032', name:'Yusuf Hamzah', kelas:'IX B', jk:'L', wali:'Hamzah Ali', status:'Aktif'},
+    {nis:'2022033', name:'Zahra Aminah', kelas:'IX B', jk:'P', wali:'Aminah Wati', status:'Non-Aktif'},
+  ],
+  guru: [
+    {id:1, name:'Drs. H. Ahmad Fauzi, M.Pd', role:'Kepala Sekolah', subject:'-', img:'https://picsum.photos/seed/teacher1/400/400.jpg'},
+    {id:2, name:'Siti Aminah, S.Pd', role:'Waka Kurikulum', subject:'Bahasa Indonesia', img:'https://picsum.photos/seed/teacher2/400/400.jpg'},
+    {id:3, name:'Ust. Muhammad Ridwan, Lc', role:'Pembina Tahfidz', subject:'Al-Qur\'an', img:'https://picsum.photos/seed/teacher3/400/400.jpg'},
+    {id:4, name:'Budi Santoso, S.Kom', role:'Guru IT', subject:'Informatika', img:'https://picsum.photos/seed/teacher4/400/400.jpg'},
+    {id:5, name:'Hj. Fatimah Zahra, M.Pd', role:'Waka Kesiswaan', subject:'Bimbingan Konseling', img:'https://picsum.photos/seed/teacher5/400/400.jpg'},
+    {id:6, name:'Abdullah Hakim, S.Pd', role:'Guru Matematika', subject:'Matematika', img:'https://picsum.photos/seed/teacher6/400/400.jpg'},
+    {id:7, name:'Nur Hidayah, S.Pd', role:'Guru Bahasa Inggris', subject:'English', img:'https://picsum.photos/seed/teacher7/400/400.jpg'},
+    {id:8, name:'Ustz. Khadijah, Lc', role:'Guru Bahasa Arab', subject:'Arabic', img:'https://picsum.photos/seed/teacher8/400/400.jpg'},
+  ],
+  program: [
+    {id:1, icon:'fa-quran', title:'Tahfidz Al-Qur\'an', desc:'Program pembiasaan hafalan Al-Qur\'an harian dengan metode talaqqi.', color:'gold'},
+    {id:2, icon:'fa-laptop-code', title:'IT & Multimedia', desc:'Pembekalan keterampilan digital, desain grafis, dan literasi komputer.', color:'green'},
+    {id:3, icon:'fa-language', title:'Bahasa Asing', desc:'Penguatan Bahasa Arab dan Inggris melalui pembiasaan harian.', color:'gold'},
+    {id:4, icon:'fa-flask', title:'Sains & Karya Ilmiah', desc:'Pengembangan penelitian ilmiah dan eksperimen sains terapan.', color:'green'},
+    {id:5, icon:'fa-futbol', title:'Olahraga', desc:'Beragam kegiatan olahraga untuk membentuk fisik yang sehat.', color:'gold'},
+    {id:6, icon:'fa-palette', title:'Seni & Budaya', desc:'Pengembangan bakat seni musik, tari, dan kaligrafi.', color:'green'},
+  ],
+  galeri: [
+    {id:1, img:'https://picsum.photos/seed/school1/600/450.jpg', title:'Pesantren Ramadhan', cat:'religi', desc:'Kegiatan tahunan untuk meningkatkan spiritualitas siswa.'},
+    {id:2, img:'https://picsum.photos/seed/school2/600/450.jpg', title:'Juara Olimpiade Sains', cat:'akademik', desc:'Siswa kelas IX meraih juara 1 Olimpiade Matematika.'},
+    {id:3, img:'https://picsum.photos/seed/school3/600/450.jpg', title:'Latihan Marching Band', cat:'ekskul', desc:'Persiapan parade kemerdekaan 17 Agustus.'},
+    {id:4, img:'https://picsum.photos/seed/school4/600/450.jpg', title:'Wisuda Tahfidz', cat:'religi', desc:'Syukuran kelulusan hafalan 2 Juz Al-Qur\'an.'},
+    {id:5, img:'https://picsum.photos/seed/school5/600/450.jpg', title:'Class Meeting', cat:'akademik', desc:'Aksi kebersamaan dan kompetisi antar kelas.'},
+    {id:6, img:'https://picsum.photos/seed/school6/600/450.jpg', title:'Olahraga Basket', cat:'ekskul', desc:'Latihan rutin tim basket SMP NU Tugasari.'},
+    {id:7, img:'https://picsum.photos/seed/school7/600/450.jpg', title:'Lomba Tahfidz', cat:'religi', desc:'Kompetisi hafalan Al-Qur\'an antar kelas.'},
+    {id:8, img:'https://picsum.photos/seed/school8/600/450.jpg', title:'Praktikum Lab', cat:'akademik', desc:'Kegiatan praktikum di laboratorium IPA.'},
+  ],
+  pesan: [
+    {id:1, name:'Budi Santoso', email:'budi@email.com', phone:'0812-3456-7890', subject:'Tanya PPDB 2025', msg:'Assalamualaikum, saya ingin menanyakan mengenai jadwal pendaftaran PPDB tahun ajaran 2025/2026. Apakah sudah dibuka?', date:'15 Jan 2025, 09:30', read:false},
+    {id:2, name:'Siti Aminah', email:'siti.aminah@email.com', phone:'0813-1111-2222', subject:'Info Beasiswa', msg:'Selamat pagi, apakah SMP NU Tugasari menyediakan program beasiswa untuk siswa kurang mampu? Terima kasih.', date:'14 Jan 2025, 14:20', read:false},
+    {id:3, name:'H. Ahmad Rifai', email:'rifai@email.com', phone:'0857-9999-8888', subject:'Kerja sama pendidikan', msg:'Saya mewakili yayasan X, ingin menjajaki kerja sama dalam program pertukaran pelajar.', date:'13 Jan 2025, 10:15', read:false},
+    {id:4, name:'Dewi Lestari', email:'dewi.lestari@email.com', phone:'0821-7777-6666', subject:'Pendaftaran Anak', msg:'Halo, anak saya saat ini kelas 6 SD. Kapan pendaftaran dibuka dan apa saja syaratnya?', date:'12 Jan 2025, 16:45', read:false},
+    {id:5, name:'Muhammad Yunus', email:'yunus@email.com', phone:'0852-5555-4444', subject:'Donasi Buku', msg:'Saya ingin mendonasikan beberapa buku referensi untuk perpustakaan sekolah. Bagaimana prosedurnya?', date:'11 Jan 2025, 11:00', read:false},
+    {id:6, name:'Khadijah Nur', email:'khadijah@email.com', phone:'0812-2222-3333', subject:'Tahfidz Program', msg:'Apakah ada kelas tahfidz khusus untuk siswa yang sudah hafal 5 juz?', date:'10 Jan 2025, 08:30', read:true},
+    {id:7, name:'Rahmat Hidayat', email:'rahmat@email.com', phone:'0813-4444-5555', subject:'Kunjungan Sekolah', msg:'Kami dari SD X ingin mengadakan kunjungan ke SMP NU Tugasari.', date:'09 Jan 2025, 13:00', read:true},
+  ]
+};
+
+/* ============== AUTH ============== */
+const SESSION = 'smpnu_admin_session';
+
+function checkAuth() {
+  if (sessionStorage.getItem(SESSION) === 'true') {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminLayout').classList.remove('hidden');
+    initDashboard();
+  }
+}
+
+document.getElementById('loginForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const user = document.getElementById('loginUser').value;
+  const pass = document.getElementById('loginPass').value;
+  
+  if (user === 'admin' && pass === 'admin123') {
+    sessionStorage.setItem(SESSION, 'true');
+    showToast('Selamat datang, Admin!', 'success');
+    setTimeout(() => {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('adminLayout').classList.remove('hidden');
+      initDashboard();
+    }, 600);
+  } else {
+    showToast('Username atau password salah.', 'error');
+  }
+});
+
+document.getElementById('togglePass').addEventListener('click', () => {
+  const inp = document.getElementById('loginPass');
+  const icon = document.querySelector('#togglePass i');
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'fa-solid fa-eye-slash'; }
+  else { inp.type = 'password'; icon.className = 'fa-solid fa-eye'; }
+});
+
+function logout() {
+  sessionStorage.removeItem(SESSION);
+  location.reload();
+}
+
+/* ============== NAVIGATION ============== */
+document.querySelectorAll('.nav-link[data-view]').forEach(link => {
+  link.addEventListener('click', () => switchView(link.dataset.view));
+});
+
+function switchView(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-link[data-view]').forEach(l => l.classList.remove('active'));
+  document.querySelector(`.nav-link[data-view="${view}"]`).classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+document.getElementById('sidebarToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('profileDropdown');
+  if (!dd.contains(e.target)) dd.classList.remove('open');
+});
+
+/* ============== MODALS ============== */
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('show'); });
+});
+
+/* ============== TOAST ============== */
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const title = document.getElementById('toastTitle');
+  const message = document.getElementById('toastMsg');
+  
+  toast.className = 'toast';
+  if (type === 'error') { toast.classList.add('error'); icon.className = 'fa-solid fa-circle-exclamation text-[var(--danger)] text-lg mt-0.5'; title.textContent = 'Kesalahan'; }
+  else if (type === 'warning') { toast.classList.add('warning'); icon.className = 'fa-solid fa-triangle-exclamation text-[var(--warning)] text-lg mt-0.5'; title.textContent = 'Peringatan'; }
+  else { icon.className = 'fa-solid fa-circle-check text-[var(--success)] text-lg mt-0.5'; title.textContent = 'Berhasil'; }
+  
+  message.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+/* ============== DASHBOARD INIT ============== */
+function initDashboard() {
+  renderRecentPPDB();
+  renderPPDBTable();
+  renderSiswaTable();
+  renderGuru();
+  renderProgram();
+  renderGaleri('all');
+  renderPesan();
+  updateBadges();
+  initCharts();
+}
+
+function updateBadges() {
+  const pendingCount = DB.ppdb.filter(p => p.status === 'pending').length;
+  const unreadCount = DB.pesan.filter(p => !p.read).length;
+  document.getElementById('ppdbBadge').textContent = pendingCount;
+  document.getElementById('pesanBadge').textContent = unreadCount;
+  document.getElementById('statPPDB').textContent = pendingCount;
+  document.getElementById('statPesan').textContent = unreadCount;
+  document.getElementById('unreadCount').textContent = unreadCount + ' baru';
+  
+  document.getElementById('cntAll').textContent = DB.ppdb.length;
+  document.getElementById('cntPending').textContent = pendingCount;
+  document.getElementById('cntApproved').textContent = DB.ppdb.filter(p => p.status === 'approved').length;
+  document.getElementById('cntRejected').textContent = DB.ppdb.filter(p => p.status === 'rejected').length;
+}
+
+/* ============== RENDER PPDB ============== */
+function renderRecentPPDB() {
+  const tbody = document.getElementById('recentPPDB');
+  tbody.innerHTML = DB.ppdb.slice(0, 5).map(p => `
+    <tr>
+      <td><div class="font-bold">${p.name}</div></td>
+      <td>${p.school}</td>
+      <td>${p.date}</td>
+      <td><span class="badge-status badge-${p.status}">${p.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+let ppdbFilter = 'all';
+function renderPPDBTable() {
+  let data = DB.ppdb;
+  if (ppdbFilter !== 'all') data = data.filter(p => p.status === ppdbFilter);
+  
+  const search = document.getElementById('searchPPDB')?.value.toLowerCase() || '';
+  if (search) data = data.filter(p => p.name.toLowerCase().includes(search) || p.school.toLowerCase().includes(search));
+  
+  const tbody = document.getElementById('ppdbTable');
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-[var(--muted)]">Tidak ada data ditemukan.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td><input type="checkbox" class="accent-[var(--accent)]"></td>
+      <td><div class="flex items-center gap-3"><div class="avatar avatar-sm">${p.name.charAt(0)}</div><div><div class="font-bold">${p.name}</div><div class="text-[10px] text-[var(--muted)]">${p.phone}</div></div></div></td>
+      <td>${p.school}</td>
+      <td>${p.parent}</td>
+      <td>${p.date}</td>
+      <td><span class="badge-status badge-${p.status}">${p.status}</span></td>
+      <td>
+        <div class="flex gap-1">
+          ${p.status === 'pending' ? `
+            <button class="btn-icon btn-sm" title="Setujui" onclick="updatePPDBStatus(${p.id}, 'approved')"><i class="fa-solid fa-check"></i></button>
+            <button class="btn-icon btn-sm" title="Tolak" onclick="updatePPDBStatus(${p.id}, 'rejected')"><i class="fa-solid fa-times"></i></button>
+          ` : ''}
+          <button class="btn-icon btn-sm" title="Lihat Detail" onclick="viewPPDBDetail(${p.id})"><i class="fa-solid fa-eye"></i></button>
+          <button class="btn-icon btn-sm danger" title="Hapus" onclick="deletePPDB(${p.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updatePPDBStatus(id, status) {
+  const p = DB.ppdb.find(x => x.id === id);
+  if (p) {
+    p.status = status;
+    renderPPDBTable();
+    renderRecentPPDB();
+    updateBadges();
+    showToast(`Pendaftar "${p.name}" telah ${status === 'approved' ? 'disetujui' : 'ditolak'}.`, 'success');
+  }
+}
+
+function deletePPDB(id) {
+  if (!confirm('Hapus data pendaftar ini?')) return;
+  DB.ppdb = DB.ppdb.filter(p => p.id !== id);
+  renderPPDBTable();
+  renderRecentPPDB();
+  updateBadges();
+  showToast('Data pendaftar dihapus.', 'success');
+}
+
+function viewPPDBDetail(id) {
+  const p = DB.ppdb.find(x => x.id === id);
+  alert(`Detail Pendaftar:\n\nNama: ${p.name}\nAsal Sekolah: ${p.school}\nOrang Tua: ${p.parent}\nTelepon: ${p.phone}\nTanggal: ${p.date}\nStatus: ${p.status}`);
+}
+
+function addPPDB() {
+  const name = document.getElementById('newPPDBName').value;
+  const school = document.getElementById('newPPDBSchool').value;
+  const parent = document.getElementById('newPPDBParent').value;
+  const phone = document.getElementById('newPPDBPhone').value;
+  
+  if (!name || !school) {
+    showToast('Mohon lengkapi nama dan asal sekolah.', 'error');
+    return;
+  }
+  
+  DB.ppdb.unshift({
+    id: Date.now(), name, school, parent, phone,
+    date: new Date().toISOString().split('T')[0],
+    status: 'pending'
+  });
+  
+  closeModal('modalAddPPDB');
+  renderPPDBTable();
+  renderRecentPPDB();
+  updateBadges();
+  showToast('Pendaftar baru berhasil ditambahkan.', 'success');
+  
+  // Reset form
+  document.getElementById('newPPDBName').value = '';
+  document.getElementById('newPPDBSchool').value = '';
+  document.getElementById('newPPDBParent').value = '';
+  document.getElementById('newPPDBPhone').value = '';
+}
+
+document.querySelectorAll('.filter-ppdb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-ppdb').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+    btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
+    ppdbFilter = btn.dataset.status;
+    renderPPDBTable();
+  });
+});
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'searchPPDB') renderPPDBTable();
+});
+
+/* ============== RENDER SISWA ============== */
+function renderSiswaTable() {
+  let data = DB.siswa;
+  const search = document.getElementById('searchSiswa')?.value.toLowerCase() || '';
+  const kelas = document.getElementById('filterKelasSiswa')?.value || 'all';
+  
+  if (search) data = data.filter(s => s.name.toLowerCase().includes(search) || s.nis.includes(search));
+  if (kelas !== 'all') data = data.filter(s => s.kelas.startsWith(kelas));
+  
+  const tbody = document.getElementById('siswaTable');
+  if (data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-[var(--muted)]">Tidak ada data ditemukan.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = data.map(s => `
+    <tr>
+      <td><strong>${s.nis}</strong></td>
+      <td><div class="flex items-center gap-3"><div class="avatar avatar-sm" style="background:${s.jk==='L'?'linear-gradient(135deg,#2563eb,#1e40af)':'linear-gradient(135deg,#db2777,#9d174d)'}">${s.name.charAt(0)}</div><span class="font-bold">${s.name}</span></div></td>
+      <td><span class="badge-status badge-verified">${s.kelas}</span></td>
+      <td>${s.jk === 'L' ? 'Laki-laki' : 'Perempuan'}</td>
+      <td>${s.wali}</td>
+      <td><span class="badge-status badge-${s.status==='Aktif'?'approved':'rejected'}">${s.status}</span></td>
+      <td><div class="flex gap-1">
+        <button class="btn-icon btn-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn-icon btn-sm danger" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'searchSiswa' || e.target.id === 'filterKelasSiswa') renderSiswaTable();
+});
+
+/* ============== RENDER GURU ============== */
+function renderGuru() {
+  const grid = document.getElementById('guruGrid');
+  grid.innerHTML = DB.guru.map(g => `
+    <div class="panel overflow-hidden">
+      <div class="relative">
+        <img src="${g.img}" alt="${g.name}" class="w-full aspect-square object-cover">
+        <div class="absolute top-3 right-3">
+          <span class="badge-status badge-approved">${g.role.split(' ')[0]}</span>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="text-[10px] uppercase tracking-wider text-[var(--accent-2)] font-bold mb-1">${g.role}</div>
+        <h4 class="font-display text-lg font-bold uppercase leading-tight mb-2">${g.name}</h4>
+        ${g.subject !== '-' ? `<div class="text-xs text-[var(--muted)] font-medium mb-3"><i class="fa-solid fa-book mr-1"></i> ${g.subject}</div>` : '<div class="mb-3"></div>'}
+        <div class="flex gap-1">
+          <button class="btn-icon btn-sm flex-1" title="Lihat"><i class="fa-solid fa-eye"></i></button>
+          <button class="btn-icon btn-sm flex-1" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-icon btn-sm danger flex-1" title="Hapus" onclick="deleteGuru(${g.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteGuru(id) {
+  if (!confirm('Hapus data guru ini?')) return;
+  DB.guru = DB.guru.filter(g => g.id !== id);
+  renderGuru();
+  showToast('Data guru dihapus.', 'success');
+}
+
+/* ============== RENDER PROGRAM ============== */
+function renderProgram() {
+  const grid = document.getElementById('programGrid');
+  grid.innerHTML = DB.program.map(p => `
+    <div class="panel p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 rounded-xl ${p.color==='gold'?'bg-[var(--accent)]/10 text-[var(--accent-2)]':'bg-[var(--nu-green)]/10 text-[var(--nu-green)]'} flex items-center justify-center text-xl">
+          <i class="fa-solid ${p.icon}"></i>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn-icon btn-sm" title="Edit"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-icon btn-sm danger" title="Hapus" onclick="deleteProgram(${p.id})"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+      <h4 class="font-display text-xl font-bold uppercase mb-2">${p.title}</h4>
+      <p class="text-xs text-[var(--muted)] leading-relaxed font-medium mb-4">${p.desc}</p>
+      <div class="flex items-center justify-between text-xs">
+        <span class="text-[var(--muted)] font-medium"><i class="fa-solid fa-users mr-1"></i> ${Math.floor(Math.random()*50)+30} siswa</span>
+        <span class="badge-status badge-approved">Aktif</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteProgram(id) {
+  if (!confirm('Hapus program ini?')) return;
+  DB.program = DB.program.filter(p => p.id !== id);
+  renderProgram();
+  showToast('Program dihapus.', 'success');
+}
+
+/* ============== RENDER GALERI ============== */
+let galeriFilter = 'all';
+function renderGaleri(cat) {
+  if (cat) galeriFilter = cat;
+  let data = DB.galeri;
+  if (galeriFilter !== 'all') data = data.filter(g => g.cat === galeriFilter);
+  
+  const grid = document.getElementById('galeriGrid');
+  if (data.length === 0) {
+    grid.innerHTML = `<div class="col-span-full text-center py-16 text-[var(--muted)]"><i class="fa-solid fa-images text-5xl mb-4 opacity-30"></i><p class="font-medium">Belum ada foto.</p></div>`;
+    return;
+  }
+  
+  grid.innerHTML = data.map(g => `
+    <div class="gallery-card">
+      <div class="relative">
+        <img src="${g.img}" alt="${g.title}">
+        <div class="absolute top-2 right-2">
+          <button class="btn-icon btn-sm danger" onclick="deleteGaleri(${g.id})" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="absolute top-2 left-2">
+          <span class="badge-status badge-approved">${g.cat}</span>
+        </div>
+      </div>
+      <div class="p-3">
+        <h4 class="font-display text-sm font-bold uppercase leading-tight mb-1">${g.title}</h4>
+        <p class="text-[10px] text-[var(--muted)] font-medium line-clamp-2">${g.desc}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteGaleri(id) {
+  if (!confirm('Hapus foto ini?')) return;
+  DB.galeri = DB.galeri.filter(g => g.id !== id);
+  renderGaleri();
+  showToast('Foto dihapus.', 'success');
+}
+
+function addGaleri() {
+  const img = document.getElementById('newGaleriImg').value;
+  const title = document.getElementById('newGaleriTitle').value;
+  const cat = document.getElementById('newGaleriCat').value;
+  const desc = document.getElementById('newGaleriDesc').value;
+  
+  if (!img || !title) {
+    showToast('URL gambar dan judul wajib diisi.', 'error');
+    return;
+  }
+  
+  DB.galeri.unshift({ id: Date.now(), img, title, cat, desc });
+  closeModal('modalAddGaleri');
+  renderGaleri();
+  showToast('Foto berhasil ditambahkan.', 'success');
+  
+  document.getElementById('newGaleriImg').value = '';
+  document.getElementById('newGaleriTitle').value = '';
+  document.getElementById('newGaleriDesc').value = '';
+}
+
+document.querySelectorAll('.filter-gallery').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-gallery').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+    btn.classList.remove('btn-ghost'); btn.classList.add('btn-primary');
+    renderGaleri(btn.dataset.cat);
+  });
+});
+
+/* ============== RENDER PESAN ============== */
+function renderPesan() {
+  const list = document.getElementById('pesanList');
+  list.innerHTML = DB.pesan.map(p => `
+    <div class="p-4 border-b border-[var(--bg-2)] cursor-pointer hover:bg-[var(--bg-2)] transition ${!p.read ? 'bg-[var(--accent)]/5' : ''}" onclick="readPesan(${p.id})">
+      <div class="flex items-start gap-3">
+        <div class="avatar avatar-sm">${p.name.charAt(0)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <div class="font-bold text-sm ${!p.read ? 'text-[var(--fg)]' : 'text-[var(--fg-2)]'} truncate">${p.name}</div>
+            ${!p.read ? '<div class="w-2 h-2 rounded-full bg-[var(--accent)] flex-shrink-0"></div>' : ''}
+          </div>
+          <div class="text-xs font-semibold text-[var(--accent-2)] truncate mt-0.5">${p.subject}</div>
+          <div class="text-[10px] text-[var(--muted)] truncate mt-1">${p.msg.substring(0, 60)}...</div>
+          <div class="text-[10px] text-[var(--muted)] mt-1">${p.date}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function readPesan(id) {
+  const p = DB.pesan.find(x => x.id === id);
+  if (!p) return;
+  p.read = true;
+  
+  document.getElementById('pesanAvatar').textContent = p.name.charAt(0);
+  document.getElementById('pesanSender').textContent = p.name;
+  document.getElementById('pesanEmail').textContent = p.email + ' • ' + p.phone;
+  
+  document.getElementById('pesanDetail').innerHTML = `
+    <div class="mb-4 pb-4 border-b border-[var(--border)]">
+      <div class="text-[10px] uppercase tracking-wider text-[var(--accent-2)] font-bold mb-1">Subjek</div>
+      <h4 class="font-display text-xl font-bold uppercase">${p.subject}</h4>
+      <div class="text-xs text-[var(--muted)] mt-2"><i class="fa-solid fa-clock mr-1"></i> ${p.date}</div>
+    </div>
+    <div class="mb-6">
+      <div class="text-sm text-[var(--fg-2)] leading-relaxed font-medium">${p.msg}</div>
+    </div>
+    <div class="bg-[var(--bg-2)] rounded-lg p-4 mb-4">
+      <div class="text-[10px] uppercase tracking-wider text-[var(--muted)] font-bold mb-2">Kontak Pengirim</div>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div><i class="fa-solid fa-envelope text-[var(--accent-2)] mr-2"></i> ${p.email}</div>
+        <div><i class="fa-solid fa-phone text-[var(--accent-2)] mr-2"></i> ${p.phone}</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-primary" onclick="showToast('Email client dibuka untuk membalas pesan.', 'success')"><i class="fa-solid fa-reply"></i> Balas</button>
+      <button class="btn btn-ghost"><i class="fa-solid fa-forward"></i> Teruskan</button>
+      <button class="btn btn-ghost" onclick="deletePesan(${p.id})"><i class="fa-solid fa-trash"></i> Hapus</button>
+    </div>
+  `;
+  
+  updateBadges();
+  renderPesan();
+}
+
+function deletePesan(id) {
+  DB.pesan = DB.pesan.filter(p => p.id !== id);
+  document.getElementById('pesanDetail').innerHTML = `
+    <div class="text-center py-16 text-[var(--muted)]">
+      <i class="fa-solid fa-envelope-open text-5xl mb-4 opacity-30"></i>
+      <p class="font-medium">Pilih pesan dari daftar untuk membaca</p>
+    </div>
+  `;
+  document.getElementById('pesanAvatar').textContent = '?';
+  document.getElementById('pesanSender').textContent = 'Pilih Pesan';
+  document.getElementById('pesanEmail').textContent = '—';
+  renderPesan();
+  updateBadges();
+  showToast('Pesan dihapus.', 'success');
+}
+
+/* ============== CHARTS ============== */
+function initCharts() {
+  Chart.defaults.font.family = 'Inter, sans-serif';
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#8b929b';
+  
+  // PPDB Trend
+  const ctx1 = document.getElementById('chartPPDB');
+  if (ctx1) {
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: ['Aug', 'Sep', 'Okt', 'Nov', 'Des', 'Jan'],
+        datasets: [{
+          label: 'Pendaftar',
+          data: [8, 15, 22, 18, 28, 12],
+          borderColor: '#d4af37',
+          backgroundColor: 'rgba(212,175,55,0.1)',
+          fill: true,
+          tension: 0.4,
+          borderWidth: 3,
+          pointBackgroundColor: '#d4af37',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#e9ecef' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+  
+  // Distribusi Kelas
+  const ctx2 = document.getElementById('chartKelas');
+  if (ctx2) {
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Kelas VII', 'Kelas VIII', 'Kelas IX'],
+        datasets: [{
+          data: [152, 148, 150],
+          backgroundColor: ['#d4af37', '#006a3e', '#1a1d21'],
+          borderWidth: 0,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 15, font: { size: 11, weight: 600 } } }
+        }
+      }
+    });
+  }
+  
+  // Program Populer
+  const ctx3 = document.getElementById('chartProgram');
+  if (ctx3) {
+    new Chart(ctx3, {
+      type: 'bar',
+      data: {
+        labels: ['Tahfidz', 'IT', 'Bahasa', 'Sains', 'Olahraga', 'Seni'],
+        datasets: [{
+          data: [180, 95, 120, 75, 110, 85],
+          backgroundColor: ['#d4af37', '#006a3e', '#d4af37', '#006a3e', '#d4af37', '#006a3e'],
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#e9ecef' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+  
+  // Kehadiran
+  const ctx4 = document.getElementById('chartHadir');
+  if (ctx4) {
+    new Chart(ctx4, {
+      type: 'line',
+      data: {
+        labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+        datasets: [
+          { label: 'Hadir', data: [445, 442, 448, 440, 438, 430], borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4, borderWidth: 2 },
+          { label: 'Absen', data: [5, 8, 2, 10, 12, 20], borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', fill: true, tension: 0.4, borderWidth: 2 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#e9ecef' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+}
+
+/* ============== EXPORT ============== */
+function exportCSV(type) {
+  if (type === 'ppdb') {
+    let csv = 'Nama,Asal Sekolah,Orang Tua,Telepon,Tanggal,Status\n';
+    DB.ppdb.forEach(p => { csv += `${p.name},${p.school},${p.parent},${p.phone},${p.date},${p.status}\n`; });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ppdb-data.csv'; a.click();
+    showToast('Data PPDB berhasil diexport ke CSV.', 'success');
+  }
+}
+
+/* ============== INIT ============== */
+checkAuth();
+</script>
+</body>
+</html>
